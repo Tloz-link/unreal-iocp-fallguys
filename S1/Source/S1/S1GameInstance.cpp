@@ -97,7 +97,7 @@ void US1GameInstance::HandleSpawn(const Protocol::PlayerInfo& PlayerInfo, bool I
 	if (IsMine)
 	{
 		auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-		AS1Character* Player = Cast< AS1Character>(PC->GetPawn());
+		AS1Character* Player = Cast<AS1Character>(PC->GetPawn());
 		if (Player == nullptr)
 			return;
 
@@ -108,7 +108,7 @@ void US1GameInstance::HandleSpawn(const Protocol::PlayerInfo& PlayerInfo, bool I
 	}
 	else
 	{
-		AS1Character* Player = Cast< AS1Character>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
+		AS1Character* Player = Cast<AS1Character>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
 		Player->SetPlayerInfo(PlayerInfo);
 		Players.Add(PlayerInfo.object_id(), Player);
 	}
@@ -171,5 +171,7 @@ void US1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
 		return;
 
 	const Protocol::PlayerInfo& Info = MovePkt.info();
-	Player->SetPlayerInfo(Info);
+
+	//Player->SetPlayerInfo(Info);
+	Player->SetDestInfo(Info);
 }

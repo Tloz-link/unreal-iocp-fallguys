@@ -31,18 +31,28 @@ AS1Character::AS1Character()
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
 	PlayerInfo = new Protocol::PlayerInfo();
+	DestInfo = new Protocol::PlayerInfo();
 }
 
 AS1Character::~AS1Character()
 {
 	delete PlayerInfo;
+	delete DestInfo;
 	PlayerInfo = nullptr;
+	DestInfo = nullptr;
 }
 
 void AS1Character::BeginPlay()
 {
 	Super::BeginPlay();
 
+	{
+		FVector Location = GetActorLocation();
+		DestInfo->set_x(Location.X);
+		DestInfo->set_y(Location.Y);
+		DestInfo->set_z(Location.Z);
+		DestInfo->set_yaw(GetControlRotation().Yaw);
+	}
 }
 
 void AS1Character::Tick(float DeltaTime)
@@ -55,6 +65,22 @@ void AS1Character::Tick(float DeltaTime)
 		PlayerInfo->set_y(Location.Y);
 		PlayerInfo->set_z(Location.Z);
 		PlayerInfo->set_yaw(GetControlRotation().Yaw);
+	}
+
+	if (IsMyPlayer() == false)
+	{
+		FVector Location = GetActorLocation();
+		FVector DestLocation = FVector(DestInfo->x(), DestInfo->y(), DestInfo->z());
+
+		FVector MoveDir = (DestLocation - Location);
+		const float DistToDest = MoveDir.Length();
+		MoveDir.Normalize();
+
+		float MoveDist = (MoveDir * 600.f * DeltaTime).Length();
+		MoveDist = FMath::Min(MoveDist, DistToDest);
+		FVector NextLocation = Location + MoveDir * MoveDist;
+
+		SetActorLocation(NextLocation);
 	}
 }
 
@@ -74,4 +100,15 @@ void AS1Character::SetPlayerInfo(const Protocol::PlayerInfo& Info)
 
 	FVector Location(Info.x(), Info.y(), Info.z());
 	SetActorLocation(Location);
+}
+
+void AS1Character::SetDestInfo(const Protocol::PlayerInfo& Info)
+{
+	if (PlayerInfo->object_id() != 0)
+	{
+		assert(PlayerInfo->object_id() == Info.object_id());
+	}
+
+	// Dest에 최종 상태 복사
+	DestInfo->CopyFrom(Info);
 }
