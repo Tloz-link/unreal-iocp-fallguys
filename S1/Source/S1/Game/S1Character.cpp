@@ -30,6 +30,8 @@ AS1Character::AS1Character()
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
+	GetCharacterMovement()->bRunPhysicsWithNoController = true;
+
 	PlayerInfo = new Protocol::PlayerInfo();
 	DestInfo = new Protocol::PlayerInfo();
 }
@@ -52,6 +54,8 @@ void AS1Character::BeginPlay()
 		DestInfo->set_y(Location.Y);
 		DestInfo->set_z(Location.Z);
 		DestInfo->set_yaw(GetControlRotation().Yaw);
+
+		SetMoveState(Protocol::MOVE_STATE_IDLE);
 	}
 }
 
@@ -69,24 +73,41 @@ void AS1Character::Tick(float DeltaTime)
 
 	if (IsMyPlayer() == false)
 	{
-		FVector Location = GetActorLocation();
-		FVector DestLocation = FVector(DestInfo->x(), DestInfo->y(), DestInfo->z());
+		//FVector Location = GetActorLocation();
+		//FVector DestLocation = FVector(DestInfo->x(), DestInfo->y(), DestInfo->z());
 
-		FVector MoveDir = (DestLocation - Location);
-		const float DistToDest = MoveDir.Length();
-		MoveDir.Normalize();
+		//FVector MoveDir = (DestLocation - Location);
+		//const float DistToDest = MoveDir.Length();
+		//MoveDir.Normalize();
 
-		float MoveDist = (MoveDir * 600.f * DeltaTime).Length();
-		MoveDist = FMath::Min(MoveDist, DistToDest);
-		FVector NextLocation = Location + MoveDir * MoveDist;
+		//float MoveDist = (MoveDir * 600.f * DeltaTime).Length();
+		//MoveDist = FMath::Min(MoveDist, DistToDest);
+		//FVector NextLocation = Location + MoveDir * MoveDist;
 
-		SetActorLocation(NextLocation);
+		//SetActorLocation(NextLocation);
+		const Protocol::MoveState State = PlayerInfo->state();
+
+		if (State == Protocol::MOVE_STATE_RUN)
+		{
+			SetActorRotation(FRotator(0, DestInfo->yaw(), 0));
+			AddMovementInput(GetActorForwardVector());
+		}
 	}
 }
 
 bool AS1Character::IsMyPlayer()
 {
 	return Cast<AS1MyPlayer>(this) != nullptr;
+}
+
+void AS1Character::SetMoveState(Protocol::MoveState State)
+{
+	if (PlayerInfo->state() == State)
+		return;
+
+	PlayerInfo->set_state(State);
+	// TODO
+	
 }
 
 void AS1Character::SetPlayerInfo(const Protocol::PlayerInfo& Info)
@@ -111,4 +132,7 @@ void AS1Character::SetDestInfo(const Protocol::PlayerInfo& Info)
 
 	// Dest에 최종 상태 복사
 	DestInfo->CopyFrom(Info);
+
+	// 상태만 따로 적용
+	SetMoveState(Info.state());
 }

@@ -12,6 +12,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "S1.h"
+#include "Kismet/KismetMathLibrary.h"
 
 AS1MyPlayer::AS1MyPlayer()
 {
@@ -59,6 +60,7 @@ void AS1MyPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AS1MyPlayer::Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AS1MyPlayer::Move);
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AS1MyPlayer::Look);
@@ -69,9 +71,25 @@ void AS1MyPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Send 판정
+	bool ForceSendPacket = false;
+
+	if (LastDesiredInput != DesiredInput)
+	{
+		ForceSendPacket = true;
+		LastDesiredInput = DesiredInput;
+	}
+
+	// State 정보
+	if (DesiredInput == FVector2D::Zero())
+		SetMoveState(Protocol::MOVE_STATE_IDLE);
+	else
+		SetMoveState(Protocol::MOVE_STATE_RUN);
+
+
 	MovePacketSendTimer -= DeltaTime;
 
-	if (MovePacketSendTimer <= 0)
+	if (MovePacketSendTimer <= 0 || ForceSendPacket)
 	{
 		MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
@@ -81,6 +99,8 @@ void AS1MyPlayer::Tick(float DeltaTime)
 		{
 			Protocol::PlayerInfo* info = MovePkt.mutable_info();
 			info->CopyFrom(*PlayerInfo);
+			info->set_yaw(DesiredYaw);
+			info->set_state(GetMoveState());
 		}
 
 		SEND_PACKET(MovePkt);
@@ -107,6 +127,20 @@ void AS1MyPlayer::Move(const FInputActionValue& Value)
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
+
+		// Cache
+		{
+			DesiredInput = MovementVector;
+			
+			DesiredMoveDirection = FVector::ZeroVector;
+			DesiredMoveDirection += ForwardDirection * MovementVector.Y;
+			DesiredMoveDirection += RightDirection * MovementVector.X;
+			DesiredMoveDirection.Normalize();
+
+			const FVector Location = GetActorLocation();
+			FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(Location, Location + DesiredMoveDirection);
+			DesiredYaw = Rotator.Yaw;
+		}
 	}
 }
 
