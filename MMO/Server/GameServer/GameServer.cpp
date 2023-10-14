@@ -9,6 +9,7 @@
 #include <tchar.h>
 #include "Job.h"
 #include "Protocol.pb.h"
+#include "Room.h"
 
 enum
 {
@@ -63,7 +64,8 @@ int main()
 		//auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);
 
 		//GSessionManager.Broadcast(sendBuffer);
-		this_thread::sleep_for(1s);
+		this_thread::sleep_for(0.1s);
+		GRoom->Execute();
 	}
 
 	GThreadManager->Join();

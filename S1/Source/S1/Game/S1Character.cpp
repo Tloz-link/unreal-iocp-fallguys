@@ -34,6 +34,10 @@ AS1Character::AS1Character()
 
 	PlayerInfo = new Protocol::PlayerInfo();
 	DestInfo = new Protocol::PlayerInfo();
+
+	// Cache
+	NextYaw = 0;
+	PrevLocation = FVector::Zero();
 }
 
 AS1Character::~AS1Character()
@@ -73,25 +77,34 @@ void AS1Character::Tick(float DeltaTime)
 
 	if (IsMyPlayer() == false)
 	{
-		//FVector Location = GetActorLocation();
-		//FVector DestLocation = FVector(DestInfo->x(), DestInfo->y(), DestInfo->z());
+		FVector Location = GetActorLocation();
+		FVector2D Location2D = FVector2D(Location.X, Location.Y);
+		const float Height = Location.Z;
 
-		//FVector MoveDir = (DestLocation - Location);
-		//const float DistToDest = MoveDir.Length();
-		//MoveDir.Normalize();
+		FVector2D DestLocation2D = FVector2D(DestInfo->x(), DestInfo->y());
 
-		//float MoveDist = (MoveDir * 600.f * DeltaTime).Length();
-		//MoveDist = FMath::Min(MoveDist, DistToDest);
-		//FVector NextLocation = Location + MoveDir * MoveDist;
+		FVector2D MoveDir = (DestLocation2D - Location2D);
+		const float DistToDest = MoveDir.Length();
+		MoveDir.Normalize();
 
-		//SetActorLocation(NextLocation);
-		const Protocol::MoveState State = PlayerInfo->state();
+		float MoveDist = (MoveDir * 300 * DeltaTime).Length();
+		MoveDist = FMath::Min(MoveDist, DistToDest);
+		FVector2D NextLocation2D = Location2D + MoveDir * MoveDist;
 
-		if (State == Protocol::MOVE_STATE_RUN)
-		{
-			SetActorRotation(FRotator(0, DestInfo->yaw(), 0));
-			AddMovementInput(GetActorForwardVector());
-		}
+		SetActorLocation(FVector(NextLocation2D.X, NextLocation2D.Y, Height));
+
+		// Rotation
+		const FRotator Rotator = FRotator(0, NextYaw, 0);
+		const FRotator CharacterRotator = GetActorRotation();
+		const FQuat NewRotation = FQuat::Slerp(CharacterRotator.Quaternion(), Rotator.Quaternion(), 0.3f);
+		SetActorRotation(FRotator(NewRotation));
+
+		// State
+		if (PrevLocation != Location)
+			SetMoveState(Protocol::MOVE_STATE_RUN);
+		else
+			SetMoveState(Protocol::MOVE_STATE_IDLE);
+		PrevLocation = Location;
 	}
 }
 
@@ -107,7 +120,8 @@ void AS1Character::SetMoveState(Protocol::MoveState State)
 
 	PlayerInfo->set_state(State);
 	// TODO
-	
+	if (State == Protocol::MOVE_STATE_JUMP)
+		Super::Jump();
 }
 
 void AS1Character::SetPlayerInfo(const Protocol::PlayerInfo& Info)
@@ -132,6 +146,8 @@ void AS1Character::SetDestInfo(const Protocol::PlayerInfo& Info)
 
 	// Dest에 최종 상태 복사
 	DestInfo->CopyFrom(Info);
+	if (Info.state() == Protocol::MOVE_STATE_RUN)
+		NextYaw = DestInfo->yaw();
 
 	// 상태만 따로 적용
 	SetMoveState(Info.state());

@@ -55,7 +55,7 @@ void AS1MyPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AS1MyPlayer::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
@@ -111,37 +111,62 @@ void AS1MyPlayer::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
-
+	
 	if (Controller != nullptr)
 	{
+		// Move
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		FVector MoveDirection = FVector::ZeroVector;
+		MoveDirection += ForwardDirection * MovementVector.Y;
+		MoveDirection += RightDirection * MovementVector.X;
+		MoveDirection.Normalize();
+
+		const FVector Location = GetActorLocation();
+		const FVector NextLocation = Location + MoveDirection * 300.f * GetWorld()->DeltaTimeSeconds;
+		SetActorLocation(NextLocation);
+
+		// Rotation
+		const FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(Location, Location + MoveDirection);
+		float Yaw = Rotator.Yaw;
+
+		if (MovementVector != FVector2D::Zero())
+		{
+			FRotator CharacterRotator = GetActorRotation();
+			FQuat NewRotation = FQuat::Slerp(CharacterRotator.Quaternion(), Rotator.Quaternion(), 0.1f);
+			SetActorRotation(FRotator(NewRotation));
+		}
 
 		// Cache
 		{
 			DesiredInput = MovementVector;
 			
-			DesiredMoveDirection = FVector::ZeroVector;
-			DesiredMoveDirection += ForwardDirection * MovementVector.Y;
-			DesiredMoveDirection += RightDirection * MovementVector.X;
-			DesiredMoveDirection.Normalize();
+			DesiredMoveDirection = MoveDirection;
 
-			const FVector Location = GetActorLocation();
-			FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(Location, Location + DesiredMoveDirection);
-			DesiredYaw = Rotator.Yaw;
+			DesiredYaw = Yaw;
 		}
 	}
+}
+
+void AS1MyPlayer::Jump(const FInputActionValue& Value)
+{
+	Super::Jump();
+
+	Protocol::C_MOVE JumpPkt;
+
+	{
+		Protocol::PlayerInfo* info = JumpPkt.mutable_info();
+		info->CopyFrom(*PlayerInfo);
+		info->set_yaw(DesiredYaw);
+		info->set_state(Protocol::MOVE_STATE_JUMP);
+	}
+
+	SEND_PACKET(JumpPkt);
 }
 
 void AS1MyPlayer::Look(const FInputActionValue& Value)

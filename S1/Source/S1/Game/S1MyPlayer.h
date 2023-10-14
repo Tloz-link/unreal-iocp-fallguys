@@ -34,6 +34,7 @@ public:
 
 protected:
 	void Move(const FInputActionValue& Value);
+	void Jump(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 
 protected:
