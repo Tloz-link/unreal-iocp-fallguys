@@ -29,6 +29,8 @@ AS1MyPlayer::AS1MyPlayer()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
 void AS1MyPlayer::BeginPlay()
@@ -86,7 +88,6 @@ void AS1MyPlayer::Tick(float DeltaTime)
 	else
 		SetMoveState(Protocol::MOVE_STATE_RUN);
 
-
 	MovePacketSendTimer -= DeltaTime;
 
 	if (MovePacketSendTimer <= 0 || ForceSendPacket)
@@ -99,11 +100,30 @@ void AS1MyPlayer::Tick(float DeltaTime)
 		{
 			Protocol::PlayerInfo* info = MovePkt.mutable_info();
 			info->CopyFrom(*PlayerInfo);
-			info->set_yaw(DesiredYaw);
 			info->set_state(GetMoveState());
 		}
 
 		SEND_PACKET(MovePkt);
+	}
+
+	if (bJump)
+	{
+		JumpPacketSendTimer -= DeltaTime;
+
+		if (JumpPacketSendTimer <= 0)
+		{
+			bJump = false;
+
+			Protocol::C_MOVE JumpPkt;
+
+			{
+				Protocol::PlayerInfo* info = JumpPkt.mutable_info();
+				info->CopyFrom(*PlayerInfo);
+				info->set_state(Protocol::MOVE_STATE_JUMP);
+			}
+
+			SEND_PACKET(JumpPkt);
+		}
 	}
 }
 
@@ -115,7 +135,6 @@ void AS1MyPlayer::Move(const FInputActionValue& Value)
 	if (Controller != nullptr)
 	{
 		// Move
-		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
@@ -126,21 +145,7 @@ void AS1MyPlayer::Move(const FInputActionValue& Value)
 		MoveDirection += ForwardDirection * MovementVector.Y;
 		MoveDirection += RightDirection * MovementVector.X;
 		MoveDirection.Normalize();
-
-		const FVector Location = GetActorLocation();
-		const FVector NextLocation = Location + MoveDirection * 300.f * GetWorld()->DeltaTimeSeconds;
-		SetActorLocation(NextLocation);
-
-		// Rotation
-		const FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(Location, Location + MoveDirection);
-		float Yaw = Rotator.Yaw;
-
-		if (MovementVector != FVector2D::Zero())
-		{
-			FRotator CharacterRotator = GetActorRotation();
-			FQuat NewRotation = FQuat::Slerp(CharacterRotator.Quaternion(), Rotator.Quaternion(), 0.1f);
-			SetActorRotation(FRotator(NewRotation));
-		}
+		AddMovementInput(MoveDirection, 300.f * GetWorld()->DeltaTimeSeconds);
 
 		// Cache
 		{
@@ -148,7 +153,9 @@ void AS1MyPlayer::Move(const FInputActionValue& Value)
 			
 			DesiredMoveDirection = MoveDirection;
 
-			DesiredYaw = Yaw;
+			const FVector Location = GetActorLocation();
+			const FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(Location, Location + MoveDirection);
+			DesiredYaw = Rotator.Yaw;
 		}
 	}
 }
@@ -156,17 +163,8 @@ void AS1MyPlayer::Move(const FInputActionValue& Value)
 void AS1MyPlayer::Jump(const FInputActionValue& Value)
 {
 	Super::Jump();
-
-	Protocol::C_MOVE JumpPkt;
-
-	{
-		Protocol::PlayerInfo* info = JumpPkt.mutable_info();
-		info->CopyFrom(*PlayerInfo);
-		info->set_yaw(DesiredYaw);
-		info->set_state(Protocol::MOVE_STATE_JUMP);
-	}
-
-	SEND_PACKET(JumpPkt);
+	bJump = true;
+	JumpPacketSendTimer = MOVE_PACKET_SEND_DELAY;
 }
 
 void AS1MyPlayer::Look(const FInputActionValue& Value)

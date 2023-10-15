@@ -65,6 +65,8 @@ protected:
 protected:
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
+	bool bJump = false;
+	float JumpPacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
 	// Cache
 	FVector2D DesiredInput;

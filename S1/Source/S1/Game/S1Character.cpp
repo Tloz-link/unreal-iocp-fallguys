@@ -5,12 +5,12 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "S1MyPlayer.h"
-
+#include "Kismet/KismetMathLibrary.h"
 
 AS1Character::AS1Character()
 {
 	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	GetCapsuleComponent()->InitCapsuleSize(42.f, 53.0f);
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -23,7 +23,7 @@ AS1Character::AS1Character()
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 700.f;
+	GetCharacterMovement()->JumpZVelocity = 400.f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
@@ -31,13 +31,10 @@ AS1Character::AS1Character()
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
 	GetCharacterMovement()->bRunPhysicsWithNoController = true;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
 
 	PlayerInfo = new Protocol::PlayerInfo();
 	DestInfo = new Protocol::PlayerInfo();
-
-	// Cache
-	NextYaw = 0;
-	PrevLocation = FVector::Zero();
 }
 
 AS1Character::~AS1Character()
@@ -69,42 +66,16 @@ void AS1Character::Tick(float DeltaTime)
 
 	{
 		FVector Location = GetActorLocation();
+		FRotator Rotator = GetActorRotation();
 		PlayerInfo->set_x(Location.X);
 		PlayerInfo->set_y(Location.Y);
 		PlayerInfo->set_z(Location.Z);
-		PlayerInfo->set_yaw(GetControlRotation().Yaw);
+		PlayerInfo->set_yaw(Rotator.Yaw);
 	}
 
 	if (IsMyPlayer() == false)
 	{
-		FVector Location = GetActorLocation();
-		FVector2D Location2D = FVector2D(Location.X, Location.Y);
-		const float Height = Location.Z;
-
-		FVector2D DestLocation2D = FVector2D(DestInfo->x(), DestInfo->y());
-
-		FVector2D MoveDir = (DestLocation2D - Location2D);
-		const float DistToDest = MoveDir.Length();
-		MoveDir.Normalize();
-
-		float MoveDist = (MoveDir * 300 * DeltaTime).Length();
-		MoveDist = FMath::Min(MoveDist, DistToDest);
-		FVector2D NextLocation2D = Location2D + MoveDir * MoveDist;
-
-		SetActorLocation(FVector(NextLocation2D.X, NextLocation2D.Y, Height));
-
-		// Rotation
-		const FRotator Rotator = FRotator(0, NextYaw, 0);
-		const FRotator CharacterRotator = GetActorRotation();
-		const FQuat NewRotation = FQuat::Slerp(CharacterRotator.Quaternion(), Rotator.Quaternion(), 0.3f);
-		SetActorRotation(FRotator(NewRotation));
-
-		// State
-		if (PrevLocation != Location)
-			SetMoveState(Protocol::MOVE_STATE_RUN);
-		else
-			SetMoveState(Protocol::MOVE_STATE_IDLE);
-		PrevLocation = Location;
+		TickMove(DeltaTime);
 	}
 }
 
@@ -146,9 +117,40 @@ void AS1Character::SetDestInfo(const Protocol::PlayerInfo& Info)
 
 	// Dest에 최종 상태 복사
 	DestInfo->CopyFrom(Info);
-	if (Info.state() == Protocol::MOVE_STATE_RUN)
-		NextYaw = DestInfo->yaw();
 
 	// 상태만 따로 적용
 	SetMoveState(Info.state());
+}
+
+void AS1Character::TickMove(float DeltaTime)
+{
+	FVector Location = GetActorLocation();
+	float Height = Location.Z;
+	FVector2D Location2D = FVector2D(Location.X, Location.Y);
+
+	FVector2D DestLocation2D = FVector2D(DestInfo->x(), DestInfo->y());
+
+	FVector2D MoveDir2D = (DestLocation2D - Location2D);
+	const float DistToDest = MoveDir2D.Length();
+	MoveDir2D.Normalize();
+
+	float MoveDist = 300.f * DeltaTime;
+	MoveDist = FMath::Min(MoveDist, DistToDest);
+
+	const FVector2D NextLocation = Location2D + MoveDir2D * MoveDist;
+	SetActorLocation(FVector(NextLocation.X, NextLocation.Y, Height));
+
+	//if (DistToDest < MoveDist)
+	//{
+	//	const FVector Destination = FVector(DestInfo->x(), DestInfo->y(), Height);
+	//	SetActorLocation(Destination);
+	//}
+	//else
+	//{
+	//	AddMovementInput(FVector(MoveDir.X, MoveDir.Y, 0), MoveDist);
+	//}
+
+	const FRotator DestRotator = FRotator(0, DestInfo->yaw(), 0);
+	const FQuat NewRotation = FQuat::Slerp(GetActorRotation().Quaternion(), DestRotator.Quaternion(), 0.1f);
+	SetActorRotation(FRotator(NewRotation));
 }

@@ -26,21 +26,15 @@ public:
 	Protocol::MoveState GetMoveState() { return PlayerInfo->state(); }
 	void SetMoveState(Protocol::MoveState State);
 
-
 public:
 	void SetPlayerInfo(const Protocol::PlayerInfo& Info);
 	void SetDestInfo(const Protocol::PlayerInfo& Info);
 	Protocol::PlayerInfo* GetPlayerInfo() { return PlayerInfo; }
 
-public:
-	UFUNCTION(BlueprintCallable)
-	bool ShouldMove() { return PlayerInfo->state() == Protocol::MOVE_STATE_RUN; }
+private:
+	void TickMove(float DeltaTime);
 
 protected:
 	class Protocol::PlayerInfo* PlayerInfo; // 현재 위치
 	class Protocol::PlayerInfo* DestInfo; // 목적지
-
-	// cache
-	float NextYaw;
-	FVector PrevLocation;
 };
