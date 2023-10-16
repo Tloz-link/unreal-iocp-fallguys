@@ -17,10 +17,20 @@ bool Room::HandleEnterPlayer(PlayerRef player)
 {
 	bool success = EnterPlayer(player);
 
-	player->playerInfo->set_x(Utils::GetRandom(0.f, 500.f));
-	player->playerInfo->set_y(Utils::GetRandom(0.f, 500.f));
+	int32 count = _players.size() - 1;
+
+	player->playerInfo->set_x(count * 130.0f);
+	player->playerInfo->set_y(0.f);
 	player->playerInfo->set_z(55.f);
-	player->playerInfo->set_x(Utils::GetRandom(0.f, 100.f));
+	player->playerInfo->set_yaw(-90.f);
+
+	player->saveInfo->set_x(count * 130.0f);
+	player->saveInfo->set_y(0.f);
+	player->saveInfo->set_z(55.f);
+
+	//player->playerInfo->set_x(Utils::GetRandom(0.f, 500.f));
+	//player->playerInfo->set_y(Utils::GetRandom(0.f, 500.f));
+	//player->playerInfo->set_z(55.f);
 
 	// 입장 사실을 신입 플레이어에게 알린다
 	{
@@ -119,6 +129,20 @@ void Room::HandleMove(Protocol::C_MOVE pkt)
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSendBuffer(movePkt);
 		Broadcast(sendBuffer);
 	}
+}
+
+void Room::HandleSave(PlayerRef player)
+{
+	Protocol::S_SAVE savePkt;
+
+	savePkt.set_object_id(player->playerInfo->object_id());
+	{
+		Protocol::SaveInfo* info = savePkt.mutable_info();
+		info->CopyFrom(*player->saveInfo);
+	}
+
+	SendBufferRef sendBuffer = ServerPacketHandler::MakeSendBuffer(savePkt);
+	Broadcast(sendBuffer);
 }
 
 RoomRef Room::GetRoomRef()

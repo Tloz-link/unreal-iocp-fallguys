@@ -69,6 +69,16 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 	return true;
 }
 
+bool Handle_S_SAVE(PacketSessionRef& session, Protocol::S_SAVE& pkt)
+{
+	if (auto* GameInstance = Cast<US1GameInstance>(GWorld->GetGameInstance()))
+	{
+		GameInstance->HandleSave(pkt);
+	}
+
+	return false;
+}
+
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString(pkt.msg().c_str()));

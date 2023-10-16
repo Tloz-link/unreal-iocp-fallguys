@@ -26,6 +26,11 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
+private:
+	void TickMovePacket(float DeltaTime);
+	void TickJumpPacket(float DeltaTime);
+	void CheckFall();
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -72,7 +77,9 @@ protected:
 	FVector2D DesiredInput;
 	FVector	DesiredMoveDirection;
 	float DesiredYaw;
+	float DesiredGroundSpeed;
 
 	// Dirty Flag Test
 	FVector2D LastDesiredInput;
+	float LastGroundSpeed = 0;
 };

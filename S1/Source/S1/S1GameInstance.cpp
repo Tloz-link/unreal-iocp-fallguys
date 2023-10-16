@@ -175,3 +175,20 @@ void US1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
 	//Player->SetPlayerInfo(Info);
 	Player->SetDestInfo(Info);
 }
+
+void US1GameInstance::HandleSave(const Protocol::S_SAVE& SavePkt)
+{
+	if (Socket == nullptr || GameServerSession == nullptr)
+		return;
+
+	const uint64 ObjectId = SavePkt.object_id();
+
+	AS1Character** FindActor = Players.Find(ObjectId);
+	if (FindActor == nullptr)
+		return;
+
+	AS1Character* Player = (*FindActor);
+
+	const Protocol::SaveInfo& Info = SavePkt.info();
+	Player->SetPlayerPos(Info);
+}

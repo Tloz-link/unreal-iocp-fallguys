@@ -49,9 +49,13 @@ namespace Protocol {
 class PlayerInfo;
 struct PlayerInfoDefaultTypeInternal;
 extern PlayerInfoDefaultTypeInternal _PlayerInfo_default_instance_;
+class SaveInfo;
+struct SaveInfoDefaultTypeInternal;
+extern SaveInfoDefaultTypeInternal _SaveInfo_default_instance_;
 }  // namespace Protocol
 PROTOBUF_NAMESPACE_OPEN
 template<> ::Protocol::PlayerInfo* Arena::CreateMaybeMessage<::Protocol::PlayerInfo>(Arena*);
+template<> ::Protocol::SaveInfo* Arena::CreateMaybeMessage<::Protocol::SaveInfo>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
@@ -183,7 +187,8 @@ class PlayerInfo final :
     kYFieldNumber = 3,
     kZFieldNumber = 4,
     kYawFieldNumber = 5,
-    kStateFieldNumber = 6,
+    kGroundSpeedFieldNumber = 6,
+    kStateFieldNumber = 7,
   };
   // uint64 object_id = 1;
   void clear_object_id();
@@ -230,7 +235,16 @@ class PlayerInfo final :
   void _internal_set_yaw(float value);
   public:
 
-  // .Protocol.MoveState state = 6;
+  // float ground_speed = 6;
+  void clear_ground_speed();
+  float ground_speed() const;
+  void set_ground_speed(float value);
+  private:
+  float _internal_ground_speed() const;
+  void _internal_set_ground_speed(float value);
+  public:
+
+  // .Protocol.MoveState state = 7;
   void clear_state();
   ::Protocol::MoveState state() const;
   void set_state(::Protocol::MoveState value);
@@ -252,7 +266,178 @@ class PlayerInfo final :
     float y_;
     float z_;
     float yaw_;
+    float ground_speed_;
     int state_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Struct_2eproto;
+};
+// -------------------------------------------------------------------
+
+class SaveInfo final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.SaveInfo) */ {
+ public:
+  inline SaveInfo() : SaveInfo(nullptr) {}
+  ~SaveInfo() override;
+  explicit PROTOBUF_CONSTEXPR SaveInfo(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  SaveInfo(const SaveInfo& from);
+  SaveInfo(SaveInfo&& from) noexcept
+    : SaveInfo() {
+    *this = ::std::move(from);
+  }
+
+  inline SaveInfo& operator=(const SaveInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline SaveInfo& operator=(SaveInfo&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const SaveInfo& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const SaveInfo* internal_default_instance() {
+    return reinterpret_cast<const SaveInfo*>(
+               &_SaveInfo_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    1;
+
+  friend void swap(SaveInfo& a, SaveInfo& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(SaveInfo* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(SaveInfo* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  SaveInfo* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<SaveInfo>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const SaveInfo& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const SaveInfo& from) {
+    SaveInfo::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(SaveInfo* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.SaveInfo";
+  }
+  protected:
+  explicit SaveInfo(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kXFieldNumber = 1,
+    kYFieldNumber = 2,
+    kZFieldNumber = 3,
+  };
+  // float x = 1;
+  void clear_x();
+  float x() const;
+  void set_x(float value);
+  private:
+  float _internal_x() const;
+  void _internal_set_x(float value);
+  public:
+
+  // float y = 2;
+  void clear_y();
+  float y() const;
+  void set_y(float value);
+  private:
+  float _internal_y() const;
+  void _internal_set_y(float value);
+  public:
+
+  // float z = 3;
+  void clear_z();
+  float z() const;
+  void set_z(float value);
+  private:
+  float _internal_z() const;
+  void _internal_set_z(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.SaveInfo)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    float x_;
+    float y_;
+    float z_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -369,7 +554,27 @@ inline void PlayerInfo::set_yaw(float value) {
   // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.yaw)
 }
 
-// .Protocol.MoveState state = 6;
+// float ground_speed = 6;
+inline void PlayerInfo::clear_ground_speed() {
+  _impl_.ground_speed_ = 0;
+}
+inline float PlayerInfo::_internal_ground_speed() const {
+  return _impl_.ground_speed_;
+}
+inline float PlayerInfo::ground_speed() const {
+  // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.ground_speed)
+  return _internal_ground_speed();
+}
+inline void PlayerInfo::_internal_set_ground_speed(float value) {
+  
+  _impl_.ground_speed_ = value;
+}
+inline void PlayerInfo::set_ground_speed(float value) {
+  _internal_set_ground_speed(value);
+  // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.ground_speed)
+}
+
+// .Protocol.MoveState state = 7;
 inline void PlayerInfo::clear_state() {
   _impl_.state_ = 0;
 }
@@ -389,9 +594,75 @@ inline void PlayerInfo::set_state(::Protocol::MoveState value) {
   // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.state)
 }
 
+// -------------------------------------------------------------------
+
+// SaveInfo
+
+// float x = 1;
+inline void SaveInfo::clear_x() {
+  _impl_.x_ = 0;
+}
+inline float SaveInfo::_internal_x() const {
+  return _impl_.x_;
+}
+inline float SaveInfo::x() const {
+  // @@protoc_insertion_point(field_get:Protocol.SaveInfo.x)
+  return _internal_x();
+}
+inline void SaveInfo::_internal_set_x(float value) {
+  
+  _impl_.x_ = value;
+}
+inline void SaveInfo::set_x(float value) {
+  _internal_set_x(value);
+  // @@protoc_insertion_point(field_set:Protocol.SaveInfo.x)
+}
+
+// float y = 2;
+inline void SaveInfo::clear_y() {
+  _impl_.y_ = 0;
+}
+inline float SaveInfo::_internal_y() const {
+  return _impl_.y_;
+}
+inline float SaveInfo::y() const {
+  // @@protoc_insertion_point(field_get:Protocol.SaveInfo.y)
+  return _internal_y();
+}
+inline void SaveInfo::_internal_set_y(float value) {
+  
+  _impl_.y_ = value;
+}
+inline void SaveInfo::set_y(float value) {
+  _internal_set_y(value);
+  // @@protoc_insertion_point(field_set:Protocol.SaveInfo.y)
+}
+
+// float z = 3;
+inline void SaveInfo::clear_z() {
+  _impl_.z_ = 0;
+}
+inline float SaveInfo::_internal_z() const {
+  return _impl_.z_;
+}
+inline float SaveInfo::z() const {
+  // @@protoc_insertion_point(field_get:Protocol.SaveInfo.z)
+  return _internal_z();
+}
+inline void SaveInfo::_internal_set_z(float value) {
+  
+  _impl_.z_ = value;
+}
+inline void SaveInfo::set_z(float value) {
+  _internal_set_z(value);
+  // @@protoc_insertion_point(field_set:Protocol.SaveInfo.z)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 

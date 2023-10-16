@@ -48,7 +48,6 @@ void AS1MyPlayer::BeginPlay()
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////
 // Input
 
 void AS1MyPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -72,6 +71,18 @@ void AS1MyPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 void AS1MyPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	CheckFall();
+	TickMovePacket(DeltaTime);
+	TickJumpPacket(DeltaTime);
+}
+
+void AS1MyPlayer::TickMovePacket(float DeltaTime)
+{
+	// Velocity
+	FVector Velocity = GetCharacterMovement()->Velocity;
+	Velocity.Z = 0;
+	GroundSpeed = Velocity.Length();
 
 	// Send ÆÇÁ¤
 	bool ForceSendPacket = false;
@@ -101,29 +112,46 @@ void AS1MyPlayer::Tick(float DeltaTime)
 			Protocol::PlayerInfo* info = MovePkt.mutable_info();
 			info->CopyFrom(*PlayerInfo);
 			info->set_state(GetMoveState());
+			info->set_ground_speed((GroundSpeed + LastGroundSpeed) / 2.0f);
 		}
 
 		SEND_PACKET(MovePkt);
+
+		LastGroundSpeed = GroundSpeed;
 	}
+}
 
-	if (bJump)
+void AS1MyPlayer::TickJumpPacket(float DeltaTime)
+{
+	if (!bJump)
+		return;
+
+	JumpPacketSendTimer -= DeltaTime;
+
+	if (JumpPacketSendTimer <= 0)
 	{
-		JumpPacketSendTimer -= DeltaTime;
+		bJump = false;
 
-		if (JumpPacketSendTimer <= 0)
+		Protocol::C_MOVE JumpPkt;
+
 		{
-			bJump = false;
-
-			Protocol::C_MOVE JumpPkt;
-
-			{
-				Protocol::PlayerInfo* info = JumpPkt.mutable_info();
-				info->CopyFrom(*PlayerInfo);
-				info->set_state(Protocol::MOVE_STATE_JUMP);
-			}
-
-			SEND_PACKET(JumpPkt);
+			Protocol::PlayerInfo* info = JumpPkt.mutable_info();
+			info->CopyFrom(*PlayerInfo);
+			info->set_state(Protocol::MOVE_STATE_JUMP);
 		}
+
+		SEND_PACKET(JumpPkt);
+	}
+}
+
+void AS1MyPlayer::CheckFall()
+{
+	FVector Location = GetActorLocation();
+
+	if (Location.Z < -700)
+	{
+		Protocol::C_SAVE SavePkt;
+		SEND_PACKET(SavePkt);
 	}
 }
 
@@ -145,7 +173,7 @@ void AS1MyPlayer::Move(const FInputActionValue& Value)
 		MoveDirection += ForwardDirection * MovementVector.Y;
 		MoveDirection += RightDirection * MovementVector.X;
 		MoveDirection.Normalize();
-		AddMovementInput(MoveDirection, 300.f * GetWorld()->DeltaTimeSeconds);
+		AddMovementInput(MoveDirection, 1.0f);
 
 		// Cache
 		{

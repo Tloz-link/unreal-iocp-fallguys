@@ -27,14 +27,21 @@ public:
 	void SetMoveState(Protocol::MoveState State);
 
 public:
+	void SetPlayerPos(const Protocol::SaveInfo& Info);
 	void SetPlayerInfo(const Protocol::PlayerInfo& Info);
 	void SetDestInfo(const Protocol::PlayerInfo& Info);
 	Protocol::PlayerInfo* GetPlayerInfo() { return PlayerInfo; }
 
 private:
 	void TickMove(float DeltaTime);
+	void TickRotate(float DeltaTime);
+	void UpdateLocation();
 
 protected:
 	class Protocol::PlayerInfo* PlayerInfo; // 현재 위치
 	class Protocol::PlayerInfo* DestInfo; // 목적지
+
+protected:
+	UPROPERTY(BlueprintReadOnly)
+	float GroundSpeed = 0.0f;
 };

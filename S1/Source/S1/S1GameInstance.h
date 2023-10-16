@@ -38,6 +38,8 @@ public:
 
 	void HandleMove(const Protocol::S_MOVE& MovePkt);
 
+	void HandleSave(const Protocol::S_SAVE& SavePkt);
+
 public:
 	class FSocket* Socket;
 	FString IpAddress = TEXT("127.0.0.1");

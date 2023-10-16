@@ -54,7 +54,7 @@ void AS1Character::BeginPlay()
 		DestInfo->set_x(Location.X);
 		DestInfo->set_y(Location.Y);
 		DestInfo->set_z(Location.Z);
-		DestInfo->set_yaw(GetControlRotation().Yaw);
+		DestInfo->set_yaw(-90);
 
 		SetMoveState(Protocol::MOVE_STATE_IDLE);
 	}
@@ -64,19 +64,23 @@ void AS1Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	{
-		FVector Location = GetActorLocation();
-		FRotator Rotator = GetActorRotation();
-		PlayerInfo->set_x(Location.X);
-		PlayerInfo->set_y(Location.Y);
-		PlayerInfo->set_z(Location.Z);
-		PlayerInfo->set_yaw(Rotator.Yaw);
-	}
+	UpdateLocation();
 
 	if (IsMyPlayer() == false)
 	{
 		TickMove(DeltaTime);
+		TickRotate(DeltaTime);
 	}
+}
+
+void AS1Character::UpdateLocation()
+{
+	FVector Location = GetActorLocation();
+	FRotator Rotator = GetActorRotation();
+	PlayerInfo->set_x(Location.X);
+	PlayerInfo->set_y(Location.Y);
+	PlayerInfo->set_z(Location.Z);
+	PlayerInfo->set_yaw(Rotator.Yaw);
 }
 
 bool AS1Character::IsMyPlayer()
@@ -90,9 +94,12 @@ void AS1Character::SetMoveState(Protocol::MoveState State)
 		return;
 
 	PlayerInfo->set_state(State);
-	// TODO
-	if (State == Protocol::MOVE_STATE_JUMP)
-		Super::Jump();
+}
+
+void AS1Character::SetPlayerPos(const Protocol::SaveInfo& Info)
+{
+	SetActorLocation(FVector(Info.x(), Info.y(), Info.z()));
+	UpdateLocation();
 }
 
 void AS1Character::SetPlayerInfo(const Protocol::PlayerInfo& Info)
@@ -106,6 +113,9 @@ void AS1Character::SetPlayerInfo(const Protocol::PlayerInfo& Info)
 
 	FVector Location(Info.x(), Info.y(), Info.z());
 	SetActorLocation(Location);
+
+	FRotator Rotator(0, Info.yaw(), 0);
+	SetActorRotation(Rotator);
 }
 
 void AS1Character::SetDestInfo(const Protocol::PlayerInfo& Info)
@@ -114,12 +124,13 @@ void AS1Character::SetDestInfo(const Protocol::PlayerInfo& Info)
 	{
 		assert(PlayerInfo->object_id() == Info.object_id());
 	}
-
+	
 	// Dest에 최종 상태 복사
 	DestInfo->CopyFrom(Info);
 
-	// 상태만 따로 적용
-	SetMoveState(Info.state());
+	// 상태 처리
+	if (Info.state() == Protocol::MOVE_STATE_JUMP)
+		Super::Jump();
 }
 
 void AS1Character::TickMove(float DeltaTime)
@@ -127,29 +138,23 @@ void AS1Character::TickMove(float DeltaTime)
 	FVector Location = GetActorLocation();
 	float Height = Location.Z;
 	FVector2D Location2D = FVector2D(Location.X, Location.Y);
-
 	FVector2D DestLocation2D = FVector2D(DestInfo->x(), DestInfo->y());
-
 	FVector2D MoveDir2D = (DestLocation2D - Location2D);
+
 	const float DistToDest = MoveDir2D.Length();
 	MoveDir2D.Normalize();
 
-	float MoveDist = 300.f * DeltaTime;
+	GroundSpeed = DestInfo->ground_speed();
+	float MoveDist = GroundSpeed * DeltaTime;
+
 	MoveDist = FMath::Min(MoveDist, DistToDest);
 
 	const FVector2D NextLocation = Location2D + MoveDir2D * MoveDist;
 	SetActorLocation(FVector(NextLocation.X, NextLocation.Y, Height));
+}
 
-	//if (DistToDest < MoveDist)
-	//{
-	//	const FVector Destination = FVector(DestInfo->x(), DestInfo->y(), Height);
-	//	SetActorLocation(Destination);
-	//}
-	//else
-	//{
-	//	AddMovementInput(FVector(MoveDir.X, MoveDir.Y, 0), MoveDist);
-	//}
-
+void AS1Character::TickRotate(float DeltaTime)
+{
 	const FRotator DestRotator = FRotator(0, DestInfo->yaw(), 0);
 	const FQuat NewRotation = FQuat::Slerp(GetActorRotation().Quaternion(), DestRotator.Quaternion(), 0.1f);
 	SetActorRotation(FRotator(NewRotation));

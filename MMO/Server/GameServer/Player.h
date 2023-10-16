@@ -11,6 +11,7 @@ public:
 
 public:
 	Protocol::PlayerInfo* playerInfo;
+	Protocol::SaveInfo* saveInfo;
 	weak_ptr<GameSession> session;
 
 public:
