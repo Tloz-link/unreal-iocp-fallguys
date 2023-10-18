@@ -73,6 +73,7 @@ void AS1MyPlayer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	CheckFall();
+	AdjustControllerRotation();
 	TickMovePacket(DeltaTime);
 	TickJumpPacket(DeltaTime);
 }
@@ -152,6 +153,21 @@ void AS1MyPlayer::CheckFall()
 	{
 		Protocol::C_SAVE SavePkt;
 		SEND_PACKET(SavePkt);
+	}
+}
+
+void AS1MyPlayer::AdjustControllerRotation()
+{
+	if (Controller)
+	{
+		FRotator ControllerRotation = GetControlRotation();
+		float NextCameraPitch = ControllerRotation.Pitch;
+
+		if (NextCameraPitch > 0 && NextCameraPitch < 90)
+		{
+			ControllerRotation.Pitch = 0;
+			Controller->SetControlRotation(ControllerRotation);
+		}
 	}
 }
 

@@ -30,6 +30,7 @@ private:
 	void TickMovePacket(float DeltaTime);
 	void TickJumpPacket(float DeltaTime);
 	void CheckFall();
+	void AdjustControllerRotation();
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -68,7 +69,7 @@ protected:
 	UInputAction* LookAction;
 
 protected:
-	const float MOVE_PACKET_SEND_DELAY = 0.2f;
+	const float MOVE_PACKET_SEND_DELAY = 0.1f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 	bool bJump = false;
 	float JumpPacketSendTimer = MOVE_PACKET_SEND_DELAY;

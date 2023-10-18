@@ -17,15 +17,19 @@ bool Room::HandleEnterPlayer(PlayerRef player)
 {
 	bool success = EnterPlayer(player);
 
+	int32 posX[12] = { 60, -60, 180, -180, 300, -300, 420, -420, 540, -540, 660, -660 };
 	int32 count = _players.size() - 1;
 
-	player->playerInfo->set_x(count * 130.0f);
-	player->playerInfo->set_y(0.f);
+	int32 offsetX = count % 12;
+	int32 offsetY = count / 12;
+	
+	player->playerInfo->set_x(posX[offsetX]);
+	player->playerInfo->set_y(offsetY * -130);
 	player->playerInfo->set_z(55.f);
-	player->playerInfo->set_yaw(-90.f);
+	player->playerInfo->set_yaw(90.f);
 
-	player->saveInfo->set_x(count * 130.0f);
-	player->saveInfo->set_y(0.f);
+	player->saveInfo->set_x(player->playerInfo->x());
+	player->saveInfo->set_y(player->playerInfo->y());
 	player->saveInfo->set_z(55.f);
 
 	//player->playerInfo->set_x(Utils::GetRandom(0.f, 500.f));

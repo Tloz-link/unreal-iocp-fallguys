@@ -54,7 +54,7 @@ void AS1Character::BeginPlay()
 		DestInfo->set_x(Location.X);
 		DestInfo->set_y(Location.Y);
 		DestInfo->set_z(Location.Z);
-		DestInfo->set_yaw(-90);
+		DestInfo->set_yaw(90);
 
 		SetMoveState(Protocol::MOVE_STATE_IDLE);
 	}
@@ -70,6 +70,7 @@ void AS1Character::Tick(float DeltaTime)
 	{
 		TickMove(DeltaTime);
 		TickRotate(DeltaTime);
+		AdjustRemoteLocation(DeltaTime);
 	}
 }
 
@@ -81,6 +82,20 @@ void AS1Character::UpdateLocation()
 	PlayerInfo->set_y(Location.Y);
 	PlayerInfo->set_z(Location.Z);
 	PlayerInfo->set_yaw(Rotator.Yaw);
+}
+
+void AS1Character::AdjustRemoteLocation(float DeltaTime)
+{
+	FVector Location = GetActorLocation();
+	FVector Destination = FVector(DestInfo->x(), DestInfo->y(), DestInfo->z());
+
+	FVector Dir = Destination - Location;
+	float Dist = Dir.Length();
+
+	if (Dist < 200)
+		return;
+
+	SetActorLocation(Destination);
 }
 
 bool AS1Character::IsMyPlayer()

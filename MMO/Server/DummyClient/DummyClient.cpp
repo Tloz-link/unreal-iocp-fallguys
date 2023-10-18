@@ -51,10 +51,10 @@ int main()
 	this_thread::sleep_for(1s);
 
 	ClientServiceRef service = make_shared<ClientService>(
-		NetAddress(L"127.0.0.1", 7777),
+		NetAddress(L"222.236.53.153", 7777),
 		make_shared<IocpCore>(),
 		[=]() { return make_shared<ServerSession>(); }, // TODO : SessionManager 등
-		1);
+		57);
 
 	ASSERT_CRASH(service->Start());
 
@@ -68,6 +68,7 @@ int main()
 				}
 			});
 	}
+
 
 	while (true)
 	{

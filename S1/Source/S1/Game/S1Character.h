@@ -36,6 +36,7 @@ private:
 	void TickMove(float DeltaTime);
 	void TickRotate(float DeltaTime);
 	void UpdateLocation();
+	void AdjustRemoteLocation(float DeltaTime);
 
 protected:
 	class Protocol::PlayerInfo* PlayerInfo; // 현재 위치

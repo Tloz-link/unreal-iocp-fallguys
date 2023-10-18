@@ -44,7 +44,6 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 
 	// 방에 입장
 	GRoom->DoAsync(&Room::HandleEnterPlayer, player);
-	//GRoom->HandleEnterPlayer(player);
 
 	return true;
 }
